@@ -494,7 +494,7 @@ const LAYER_CLASSES = {
 
 // ─── Init ───
 (async function(){
-  const gres = await fetch('/api/graph');
+  const gres = await fetch('api/graph');
   data = await gres.json();
   document.getElementById('graph-info').textContent = data.nodes.length + ' 模块, ' + data.edges.length + ' 依赖';
   if (data.nodes.length) renderGraph();
@@ -635,7 +635,7 @@ async function saveCurate(){
   const label = document.getElementById('edit-label').value;
   const notes = document.getElementById('edit-notes').value;
   const tags = document.getElementById('edit-tags').value.split(',').map(s=>s.trim()).filter(Boolean);
-  await fetch('/api/curate', {
+  await fetch('api/curate', {
     method: 'PUT',
     headers: {'Content-Type':'application/json'},
     body: JSON.stringify({path: selectedNode.path, label, notes, tags})
@@ -682,7 +682,7 @@ function renderTable(filter){
 
 // ─── ADR (Tab 3) ───
 async function loadADRs(){
-  const res = await fetch('/api/adrs');
+  const res = await fetch('api/adrs');
   const adrs = await res.json();
   const container = document.getElementById('adr-view');
   if (!adrs.length) {
@@ -710,7 +710,7 @@ function bindSearch(){
 async function doSearch(q){
   const container = document.getElementById('search-results');
   if (!q) { container.innerHTML = '<div class="empty-state">输入关键词开始搜索</div>'; return; }
-  const res = await fetch('/api/search?q=' + encodeURIComponent(q));
+  const res = await fetch('api/search?q=' + encodeURIComponent(q));
   const results = await res.json();
   if (!results.length) { container.innerHTML = '<div class="empty-state">未找到匹配结果</div>'; return; }
   container.innerHTML = results.map(r =>

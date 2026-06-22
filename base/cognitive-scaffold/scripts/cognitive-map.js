@@ -17,11 +17,12 @@ import { fileURLToPath } from 'node:url';
 // ─── 配置 ──────────────────────────────────────────────
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const PROJECT_ROOT = resolve(join(__dirname, '..', '..', '..'));
+const PROJECT_ROOT = resolve(join(__dirname, '..', '..'));
 
 function argVal(flag, def) {
   const i = process.argv.indexOf(flag);
-  return i > -1 ? process.argv[i + 1] : def;
+  const v = i > -1 ? process.argv[i + 1] : undefined;
+  return (v && !v.startsWith('--')) ? v : def;
 }
 
 const PORT = parseInt(argVal('--port', '3458'));
@@ -45,7 +46,7 @@ async function cruiseProject() {
   for (const dir of SCAN_DIRS) {
     const full = join(PROJECT_ROOT, dir);
     if (!existsSync(full)) continue;
-    modules.push(dir);
+    modules.push(full);
   }
   if (modules.length === 0) return [];
 
@@ -106,7 +107,7 @@ function extractImports(src, filePath) {
   }
   // Python: import patterns
   if (ext === '.py') {
-    const pyRe = /^(?:from\s+(\S+)\s+import|import\s+(\S+))/gm;
+    const pyRe = /^(?!#)(?:from\s+(\S+)\s+import|import\s+(\S+))/gm;
     let m;
     while ((m = pyRe.exec(src)) !== null) {
       const p = m[1] || m[2];
@@ -121,7 +122,7 @@ function extractImports(src, filePath) {
 function parseJSDoc(filePath) {
   try {
     const src = readFileSync(filePath, 'utf-8');
-    const jsdocRe = /\/\*\*\s*\n\s*\*\s*@module\s+(.+?)\s*\n(?:\s*\*\s*@brief\s+(.+?)\s*\n)?(?:\s*\*\s*@layer\s+(.+?)\s*\n)?/;
+    const jsdocRe = /\/\*\*[\s\S]*?@module\s+(.+?)\s*\n(?:\s*\*\s*@brief\s+([\s\S]*?)\s*\n)?(?:\s*\*\s*@layer\s+(.+?)\s*\n)?/;
     const m = src.match(jsdocRe);
     if (m) {
       return { module: m[1]?.trim(), brief: m[2]?.trim() || '', layer: m[3]?.trim() || '' };
@@ -165,8 +166,8 @@ function loadADRs() {
     try {
       const content = readFileSync(join(ADR_DIR, e.name), 'utf-8');
       const titleRe = /^#\s+(.+)/m;
-      const statusRe = /状态[：:]\s*(\w+)/;
-      const dateRe = /日期[：:]\s*([\d-]+)/;
+      const statusRe = /(?:Status|状态)\s*[：:]\s*(\w+)/i;
+      const dateRe = /(?:Date|日期)\s*[：:]\s*([\d-]+)/i;
       list.push({
         file: e.name,
         title: (content.match(titleRe) || [,'无标题'])[1],
@@ -672,7 +673,7 @@ function renderTable(filter){
       '<td style="max-width:240px">' + esc(n.brief || '—') + '</td>' +
       '<td>' + esc(n.layer) + '</td>' +
       '<td>' + (n.dependents||[]).length + '</td>' +
-      '<td>' + (!n.hasJSDoc && !n.hasCuration ? '<span class="badge warn">待标注</span>' : (n.tags||[]).map(t => '<span class="tag ' + t + '">' + esc(t) + '</span>').join('')) + '</td>' +
+      '<td>' + (!n.hasJSDoc && !n.hasCuration ? '<span class="badge warn">待标注</span>' : (n.tags||[]).map(t => '<span class="tag tag-' + escAttr(t.replace(/[^a-zA-Z0-9_-]/g,'')) + '">' + esc(t) + '</span>').join('')) + '</td>' +
       '</tr>'
     ).join('') +
     '</tbody></table>';
@@ -732,7 +733,7 @@ function navigateResult(type, id){
 
 // ─── Helpers ───
 function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function escAttr(s){ return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/\\\\/g,'\\\\\\\\'); }
+function escAttr(s){ return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/'/g,'&#39;').replace(/\\\\/g,'\\\\\\\\'); }
 function simpleMD(md){
   return esc(md)
     .replace(/^### (.+)/gm,'<h3>$1</h3>')

@@ -106,10 +106,52 @@ if [ -f "$BASE_DIR/CLAUDE.md" ]; then
   fi
 fi
 
+# --- Memory Bank 文件保护 ---
+# 模板中新增的 Memory Bank 文件 → 提示用户
+echo "🔍 检查新增的模板文件..."
+for src in "$BASE_DIR"/docs/*.md; do
+  if [ -f "$src" ]; then
+    fname=$(basename "$src")
+    dest="docs/$fname"
+    if [ ! -f "$dest" ]; then
+      echo "   📄 模板新增: $dest，复制到项目"
+      cp "$src" "$dest"
+      SYNCED+=("$dest (新增模板文件)")
+    fi
+  fi
+done
+
+# .gitignore → 显示差异，询问
+if [ -f "$BASE_DIR/.gitignore" ]; then
+  dest=".gitignore"
+  if [ -f "$dest" ]; then
+    if ! diff -q "$BASE_DIR/.gitignore" "$dest" > /dev/null 2>&1; then
+      echo "---"
+      echo "⚠️  .gitignore 模板有更新:"
+      diff -u "$dest" "$BASE_DIR/.gitignore" || true
+      read -p "是否用新模板更新 .gitignore? [y/N]: " answer
+      if [ "$answer" = "y" ] || [ "$answer" = "Y" ]; then
+        cp "$BASE_DIR/.gitignore" "$dest"
+        SYNCED+=("$dest")
+      else
+        SKIPPED+=("$dest (保留本地版本)")
+      fi
+    fi
+  fi
+fi
+
 # --- 更新版本记录 ---
-TEMP_JSON=$(mktemp)
-jq --arg commit "$NEW_COMMIT" '.template_commit = $commit' .project-init.json > "$TEMP_JSON"
-mv "$TEMP_JSON" .project-init.json
+if command -v jq &>/dev/null; then
+  TEMP_JSON=$(mktemp)
+  if jq --arg commit "$NEW_COMMIT" '.template_commit = $commit' .project-init.json > "$TEMP_JSON" 2>/dev/null; then
+    mv "$TEMP_JSON" .project-init.json
+  else
+    echo "⚠️  .project-init.json 格式异常，跳过版本更新"
+    rm -f "$TEMP_JSON"
+  fi
+else
+  echo "⚠️  jq 未安装，跳过版本更新（不影响同步）"
+fi
 
 # --- 打印摘要 ---
 echo ""

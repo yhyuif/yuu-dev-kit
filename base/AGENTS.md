@@ -9,10 +9,11 @@
 - 在生产环境直接运行破坏性操作
 
 ## always（每次自动执行，不等用户开口）
-- Session 开始 → 读 Memory Bank（`docs/activeContext.md` + `docs/projectbrief.md` + `docs/techContext.md` + `docs/systemPatterns.md` + `docs/project-status.md`）
+- Session 开始 → 读 Memory Bank（`docs/activeContext.md` + `docs/projectbrief.md` + `docs/productContext.md` + `docs/techContext.md` + `docs/systemPatterns.md` + `docs/project-status.md`）
 - Session 结束 → 更新 `docs/activeContext.md`（记录完成了什么、卡在哪、下一步）
 - 运行方式变化（命令、端口、定时任务频率等）→ 同步更新 `docs/techContext.md`
 - 架构模式变化（分层调整、新增设计模式）→ 同步更新 `docs/systemPatterns.md`
+- 产品需求/范围变化 → 同步更新 `docs/productContext.md`
 - 改动 >1 个文件或 >50 行代码 → 先写设计计划，用户确认后再执行
 - 写完代码 → 逐入口点验证（列出所有受影响入口，逐个测试）
 - 验证通过 → 多维度代码审查

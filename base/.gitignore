@@ -4,3 +4,21 @@ node_modules/
 .DS_Store
 dist/
 build/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Build / Coverage
+.next/
+.nuxt/
+coverage/
+.history/

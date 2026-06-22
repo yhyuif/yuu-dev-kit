@@ -43,6 +43,21 @@ fi
 
 # --- 创建目标目录 ---
 mkdir -p "$TARGET_DIR"
+
+# 检查目标目录是否非空
+if [ -n "$(ls -A "$TARGET_DIR" 2>/dev/null)" ]; then
+  echo ""
+  echo "⚠️  目标目录 $TARGET_DIR 非空"
+  echo "   已有文件:"
+  ls -la "$TARGET_DIR" | tail -5
+  echo ""
+  read -p "继续将覆盖同名文件，确认? [y/N]: " OVERWRITE
+  if [ "$OVERWRITE" != "y" ] && [ "$OVERWRITE" != "Y" ]; then
+    echo "已取消"
+    exit 0
+  fi
+fi
+
 cd "$TARGET_DIR"
 
 # --- 复制模板 ---
@@ -93,6 +108,14 @@ case "$PROJECT_TYPE" in
     ;;
 esac
 
+# --- 运行首次扫描 ---
+echo ""
+echo "🔍 运行认知架构首次扫描..."
+
+if [ -f cognitive-scaffold/scripts/cognitive-map.js ]; then
+  node cognitive-scaffold/scripts/cognitive-map.js --scan-only 2>/dev/null || echo "⚠️  首次扫描跳过（可能缺少源文件）"
+fi
+
 # --- Git 初始化 ---
 echo ""
 echo "🔧 初始化 Git..."
@@ -113,12 +136,17 @@ echo "  ✅ 项目 $PROJECT_NAME 初始化完成"
 echo "============================================"
 echo ""
 echo "已创建:"
-echo "  cognitive-scaffold/  认知支架（架构图 + 策展）"
-echo "  AGENTS.md            AI 行为规则"
-echo "  CLAUDE.md            Claude Code 入口"
-echo "  docs/activeContext.md 当前上下文（AI 自动维护）"
-echo "  docs/adr/            架构决策记录"
-echo "  docs/project-status.md 项目状态追踪"
+echo "  AGENTS.md                AI 行为规则（always/ask/never）"
+echo "  CLAUDE.md                Claude Code 入口"
+echo "  cognitive-scaffold/      认知支架（架构图 + 策展）"
+echo "  docs/activeContext.md    当前上下文（AI 自动维护）"
+echo "  docs/projectbrief.md     项目概览"
+echo "  docs/productContext.md   产品上下文"
+echo "  docs/systemPatterns.md   系统架构模式"
+echo "  docs/techContext.md      技术上下文"
+echo "  docs/project-status.md   项目状态追踪"
+echo "  docs/adr/                架构决策记录"
+echo "  .project-init.json       脚手架版本标记"
 echo ""
 echo "下一步:"
 echo "  1. cd $PROJECT_NAME"

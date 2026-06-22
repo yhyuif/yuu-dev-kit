@@ -57,7 +57,8 @@ async function cruiseProject() {
       doNotFollow: { path: ['node_modules'] },
       exclude: { path: ['node_modules', 'test(s)?', '__tests__', 'dist', 'build'] },
     });
-    return (result && result.output && result.output.modules) ? result.output.modules : [];
+    const output = (typeof result.output === 'string') ? JSON.parse(result.output) : result.output;
+    return (output && output.modules) ? output.modules : [];
   } catch (_err) {
     // fallback: simple file scanner
     return fallbackScan();

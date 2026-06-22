@@ -388,6 +388,7 @@ function serveIndex(res) {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>认知地图</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
 <style>
 /* ═══ Design tokens ═══ */
 :root {
@@ -593,36 +594,31 @@ function renderGraph(){
     svg.appendChild(t); return;
   }
 
-  const pos = {};
   const cx = W/2, cy = H/2;
-  const nodeCount = nodes.length;
-  const spread = Math.min(W, H) * 0.42;
-  nodes.forEach((n, i) => {
-    const angle = (2 * Math.PI * i) / nodeCount;
-    pos[n.id] = { x: cx + spread * Math.cos(angle), y: cy + spread * Math.sin(angle) };
-  });
 
-  const iterations = Math.max(100, nodeCount * 2);
-  const repulsionBase = 800;
-  for (let iter = 0; iter < iterations; iter++) {
-    const damp = 1 - (iter / iterations) * 0.8;
-    for (const n of nodes) {
-      let fx = 0, fy = 0; const pn = pos[n.id];
-      for (const m of nodes) {
-        if (n.id === m.id) continue; const pm = pos[m.id];
-        let dx = pn.x - pm.x, dy = pn.y - pm.y;
-        const dist = Math.max(5, Math.sqrt(dx*dx + dy*dy));
-        const force = repulsionBase / (dist * dist);
-        fx += (dx / dist) * force; fy += (dy / dist) * force;
-      }
-      for (const e of edges) {
-        if (e.source === n.id && pos[e.target]) { let dx = pos[e.target].x - pn.x, dy = pos[e.target].y - pn.y; fx += dx * 0.005; fy += dy * 0.005; }
-        if (e.target === n.id && pos[e.source]) { let dx = pos[e.source].x - pn.x, dy = pos[e.source].y - pn.y; fx += dx * 0.005; fy += dy * 0.005; }
-      }
-      fx += (cx - pn.x) * 0.0005; fy += (cy - pn.y) * 0.0005;
-      pn.x += fx * damp; pn.y += fy * damp;
-    }
-  }
+  // Build d3-compatible data with pre-calculated radii
+  const simNodes = nodes.map(n => ({
+    id: n.id,
+    radius: Math.max(7, Math.min(28, 8 + (n.dependents||[]).length * 2))
+  }));
+  const simEdges = edges.map(e => ({ source: e.source, target: e.target }));
+
+  // d3 force simulation with collision prevention
+  const sim = d3.forceSimulation(simNodes)
+    .force('link', d3.forceLink(simEdges).id(d => d.id).distance(60))
+    .force('charge', d3.forceManyBody().strength(-500))
+    .force('center', d3.forceCenter(cx, cy))
+    .force('collide', d3.forceCollide().radius(d => d.radius + 8))
+    .alphaDecay(0.02)
+    .stop();
+
+  // Tick synchronously until settled
+  const totalTicks = Math.min(500, Math.max(300, nodes.length * 8));
+  for (let i = 0; i < totalTicks; i++) sim.tick();
+
+  // Build position lookup
+  const pos = {};
+  simNodes.forEach(n => { pos[n.id] = { x: n.x, y: n.y, radius: n.radius }; });
 
   const edgeSet = new Set();
   for (const e of edges) {
@@ -634,8 +630,7 @@ function renderGraph(){
 
   for (const n of nodes) {
     const p = pos[n.id]; if (!p) continue;
-    const depCount = (n.dependents||[]).length;
-    const radius = Math.max(7, Math.min(28, 8 + depCount * 2));
+    const radius = p.radius;
 
     const g = document.createElementNS('http://www.w3.org/2000/svg','g');
     g.setAttribute('role','button'); g.setAttribute('tabindex','0');

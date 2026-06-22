@@ -389,102 +389,164 @@ function serveIndex(res) {
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>认知地图</title>
 <style>
+/* ═══ Design tokens ═══ */
+:root {
+  --bg-base: #0d1117;
+  --bg-surface: #161b22;
+  --bg-elevated: #1c2129;
+  --bg-overlay: #21262d;
+  --border-default: #30363d;
+  --border-muted: #21262d;
+  --text-primary: #e6edf3;
+  --text-secondary: #8b949e;
+  --text-muted: #6e7681;
+  --accent-blue: #58a6ff;
+  --accent-green: #3fb950;
+  --accent-orange: #d29922;
+  --accent-purple: #a371f7;
+  --accent-red: #f85149;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 20px; --space-6: 24px; --space-8: 32px;
+}
 *{margin:0;padding:0;box-sizing:border-box}
-body{font:14px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#1a1a2e;color:#e0e0e0;overflow:hidden;height:100vh;display:flex;flex-direction:column}
-header{background:#16213e;padding:8px 16px;display:flex;align-items:center;gap:2px;border-bottom:1px solid #0f3460}
-header button{padding:8px 16px;border:none;background:transparent;color:#a0a0c0;cursor:pointer;font-size:13px;border-radius:6px 6px 0 0;transition:all .15s}
-header button:hover{color:#fff;background:#0f34604d}
-header button.active{color:#fff;background:#0f3460;font-weight:600}
+body{font:14px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg-base);color:var(--text-primary);overflow:hidden;height:100vh;display:flex;flex-direction:column}
+
+/* ═══ Header ═══ */
+header{display:flex;align-items:stretch;background:var(--bg-surface);border-bottom:1px solid var(--border-default);padding:0 var(--space-4);min-height:44px}
+header button{padding:var(--space-3) var(--space-4);border:none;background:transparent;color:var(--text-secondary);cursor:pointer;font-size:13px;position:relative;transition:color .15s}
+header button:hover{color:var(--text-primary)}
+header button.active{color:var(--text-primary);font-weight:600}
+header button.active::after{content:'';position:absolute;bottom:0;left:var(--space-2);right:var(--space-2);height:2px;background:var(--accent-blue);border-radius:2px 2px 0 0}
 header .spacer{flex:1}
-header .info{font-size:12px;color:#666}
+header .info{display:flex;align-items:center;font-size:12px;color:var(--text-muted);padding:0 var(--space-4)}
+
+/* ═══ Layout ═══ */
 main{flex:1;display:flex;overflow:hidden}
 .tab{display:none;flex:1;overflow:auto}
 .tab.active{display:flex}
-/* Tab 1: Graph */
+
+/* ═══ Graph ═══ */
 #graph-svg{width:100%;height:100%}
-#graph-svg circle{stroke-width:2;cursor:pointer;transition:r .15s}
-#graph-svg circle:hover{stroke:#fff;stroke-width:3}
-#graph-svg circle.core{stroke:#ffd700}
-#graph-svg circle.unlabeled{stroke-dasharray:4 2;stroke:#666}
-#graph-svg line{stroke:#2a2a4a;stroke-width:1}
-#graph-svg text{font-size:10px;fill:#ccc;pointer-events:none;user-select:none}
-/* Side panel */
-.side-panel{width:320px;background:#16213e;border-left:1px solid #0f3460;padding:16px;overflow-y:auto;display:none;flex-shrink:0}
-.side-panel.open{display:block}
-.side-panel h3{font-size:16px;margin-bottom:4px}
-.side-panel .path{font-size:11px;color:#666;margin-bottom:12px;word-break:break-all}
-.side-panel .field{margin-bottom:12px}
-.side-panel label{display:block;font-size:11px;color:#888;margin-bottom:4px;text-transform:uppercase}
-.side-panel input,.side-panel textarea{width:100%;padding:8px;background:#1a1a2e;border:1px solid #0f3460;color:#e0e0e0;border-radius:4px;font-size:13px}
-.side-panel textarea{min-height:80px;resize:vertical;font-family:inherit}
-.side-panel button{padding:8px 16px;background:#0f3460;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:13px}
-.side-panel button:hover{background:#1a4a7a}
-.side-panel .dep-list{font-size:12px;color:#888}
-.side-panel .dep-list span{display:inline-block;background:#0f3460;padding:2px 8px;border-radius:10px;margin:2px 4px 2px 0;font-size:11px;color:#ccc;cursor:pointer}
-.side-panel .tag{display:inline-block;padding:2px 8px;border-radius:10px;margin:2px;font-size:11px}
-.side-panel .tag.tech-debt{background:#663300;color:#ffaa00}
-.side-panel .tag.core{background:#003366;color:#66aaff}
-.side-panel .tag.needs-split{background:#660033;color:#ff66aa}
-/* Tab 2: Table */
-#table-view{padding:16px;width:100%}
+#graph-svg circle{stroke-width:1.5;cursor:pointer;transition:r .15s}
+#graph-svg circle:hover{filter:brightness(1.3)}
+#graph-svg circle.core{stroke:var(--accent-orange);stroke-width:2.5}
+#graph-svg circle.unlabeled{stroke-dasharray:4 2;stroke:var(--text-muted);opacity:0.6}
+#graph-svg line{stroke:var(--border-default);stroke-width:0.8;opacity:0.5}
+#graph-svg .edge-label{font-size:9px;fill:var(--text-muted)}
+#graph-svg .node-label{font-size:10px;fill:var(--text-primary);pointer-events:none;user-select:none;text-shadow:0 1px 3px var(--bg-base)}
+#graph-svg .node-label-bg{fill:var(--bg-base);opacity:0.7;pointer-events:none}
+#graph-svg .empty-text{fill:var(--text-muted)}
+
+/* ═══ Side panel ═══ */
+.side-panel{width:340px;background:var(--bg-surface);border-left:1px solid var(--border-default);display:none;flex-direction:column;flex-shrink:0}
+.side-panel.open{display:flex}
+.side-panel-header{padding:var(--space-4);border-bottom:1px solid var(--border-default);display:flex;justify-content:space-between;align-items:flex-start;gap:var(--space-3)}
+.side-panel-header h3{font-size:15px;word-break:break-word;flex:1}
+.side-panel-header .path{font-size:11px;color:var(--text-muted);font-family:monospace}
+.side-panel-close{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:18px;padding:0 var(--space-1);line-height:1}
+.side-panel-close:hover{color:var(--text-primary)}
+.side-panel-body{flex:1;overflow-y:auto;padding:var(--space-4)}
+.side-panel-body .card{background:var(--bg-elevated);border:1px solid var(--border-muted);border-radius:var(--radius-md);padding:var(--space-4);margin-bottom:var(--space-4)}
+.side-panel-body .card:last-child{margin-bottom:0}
+.side-panel-body .card-label{display:block;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:var(--space-2)}
+.side-panel-body input,.side-panel-body textarea{width:100%;padding:var(--space-2) var(--space-3);background:var(--bg-base);border:1px solid var(--border-default);color:var(--text-primary);border-radius:var(--radius-sm);font-size:13px;outline:none;transition:border-color .15s}
+.side-panel-body input:focus,.side-panel-body textarea:focus{border-color:var(--accent-blue)}
+.side-panel-body textarea{min-height:80px;resize:vertical;font-family:inherit;line-height:1.5}
+.side-panel-body .dep-chip{display:inline-block;background:var(--bg-overlay);border:1px solid var(--border-default);padding:var(--space-1) var(--space-2);border-radius:var(--radius-lg);margin:2px;font-size:11px;color:var(--text-secondary);cursor:pointer;transition:all .15s}
+.side-panel-body .dep-chip:hover{border-color:var(--accent-blue);color:var(--accent-blue)}
+.side-panel-body .meta-row{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--text-secondary);padding:var(--space-1) 0}
+.side-panel-body .tag{display:inline-block;padding:1px 8px;border-radius:var(--radius-lg);font-size:11px;font-weight:500}
+.side-panel-body .tag-core{background:#1a3a5c;color:var(--accent-blue)}
+.side-panel-body .tag-tech-debt{background:#3d2e00;color:var(--accent-orange)}
+.side-panel-body .tag-needs-split{background:#3d1a3a;color:var(--accent-purple)}
+.side-panel-footer{padding:var(--space-4);border-top:1px solid var(--border-default)}
+.side-panel-footer button{width:100%;padding:var(--space-2) var(--space-4);background:var(--accent-green);color:#000;border:none;border-radius:var(--radius-sm);font-size:13px;font-weight:600;cursor:pointer;transition:opacity .15s}
+.side-panel-footer button:hover{opacity:0.9}
+
+/* ═══ Table ═══ */
+#table-view{padding:var(--space-4);width:100%}
+#table-view .filter-bar{padding:var(--space-2) var(--space-3);background:var(--bg-surface);border:1px solid var(--border-default);color:var(--text-primary);border-radius:var(--radius-sm);width:280px;font-size:13px;margin-bottom:var(--space-4);outline:none}
+#table-view .filter-bar:focus{border-color:var(--accent-blue)}
 #table-view table{width:100%;border-collapse:collapse;font-size:13px}
-#table-view th{text-align:left;padding:10px 12px;background:#16213e;border-bottom:2px solid #0f3460;position:sticky;top:0;z-index:1}
-#table-view td{padding:8px 12px;border-bottom:1px solid #1a1a3a}
-#table-view tr:hover td{background:#16213e55}
-#table-view tr.unlabeled td{color:#555}
-#table-view .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px}
-#table-view .badge.warn{background:#663300;color:#ffaa00}
-#table-view input[type=text]{padding:8px 12px;background:#1a1a2e;border:1px solid #0f3460;color:#e0e0e0;border-radius:4px;width:240px;margin-bottom:12px}
-/* Tab 3: ADR */
-#adr-view{padding:16px;width:100%;max-width:800px}
-#adr-view .adr-item{margin-bottom:16px;padding:16px;background:#16213e;border-radius:8px;cursor:pointer;transition:background .15s}
-#adr-view .adr-item:hover{background:#1a2a4e}
-#adr-view .adr-item .adr-title{font-size:15px;font-weight:600;margin-bottom:4px}
-#adr-view .adr-item .adr-meta{font-size:11px;color:#666}
-#adr-view .adr-item .adr-content{display:none;margin-top:12px;font-size:13px;line-height:1.7;color:#bbb}
-#adr-view .adr-item .adr-content.open{display:block}
-#adr-view .adr-item .adr-content h1,#adr-view .adr-content h2{font-size:14px;color:#fff;margin:12px 0 4px}
-#adr-view .adr-item .adr-content ul,#adr-view .adr-content ol{margin:4px 0;padding-left:20px}
-#adr-view .adr-item .adr-content code{background:#1a1a2e;padding:1px 5px;border-radius:3px}
-#adr-view .adr-item .adr-content pre{background:#1a1a2e;padding:12px;border-radius:4px;overflow-x:auto;font-size:12px}
-/* Tab 4: Search */
-#search-view{padding:16px;width:100%;max-width:800px}
-#search-view input[type=text]{padding:12px 16px;background:#1a1a2e;border:1px solid #0f3460;color:#e0e0e0;border-radius:8px;width:100%;font-size:15px;margin-bottom:16px}
-#search-view .result-item{padding:12px;margin-bottom:8px;background:#16213e;border-radius:6px;cursor:pointer}
-#search-view .result-item:hover{background:#1a2a4e}
-#search-view .result-item .result-type{font-size:10px;color:#666;text-transform:uppercase}
-#search-view .result-item .result-title{font-size:14px;font-weight:600}
-#search-view .result-item .result-detail{font-size:12px;color:#888}
-.empty-state{display:flex;align-items:center;justify-content:center;height:200px;color:#555;font-size:14px}
-/* Layer colors */
+#table-view th{text-align:left;padding:var(--space-2) var(--space-3);color:var(--text-muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;border-bottom:1px solid var(--border-default);position:sticky;top:0;background:var(--bg-base);z-index:1}
+#table-view td{padding:var(--space-2) var(--space-3);border-bottom:1px solid var(--border-muted);vertical-align:top}
+#table-view tr:hover td{background:var(--bg-elevated)}
+#table-view tr.unlabeled td{opacity:0.5}
+#table-view .badge{display:inline-block;padding:1px 8px;border-radius:var(--radius-lg);font-size:11px}
+#table-view .badge-warn{border:1px solid var(--accent-orange);color:var(--accent-orange)}
+
+/* ═══ ADR ═══ */
+#adr-view{padding:var(--space-4);width:100%;max-width:860px}
+#adr-view .adr-item{margin-bottom:var(--space-3);padding:var(--space-4);background:var(--bg-surface);border:1px solid var(--border-muted);border-radius:var(--radius-md);cursor:pointer;transition:all .15s}
+#adr-view .adr-item:hover{border-color:var(--border-default)}
+#adr-view .adr-title{font-size:15px;font-weight:600;margin-bottom:var(--space-1)}
+#adr-view .adr-meta{font-size:11px;color:var(--text-muted);margin-bottom:var(--space-3)}
+#adr-view .adr-content{display:none;font-size:13px;line-height:1.7;color:var(--text-secondary);padding-top:var(--space-3);border-top:1px solid var(--border-muted)}
+#adr-view .adr-content.open{display:block}
+#adr-view .adr-content h1,.adr-content h2{font-size:14px;color:var(--text-primary);margin:var(--space-3) 0 var(--space-1)}
+#adr-view .adr-content ul,.adr-content ol{margin:var(--space-1) 0;padding-left:var(--space-5)}
+#adr-view .adr-content code{background:var(--bg-elevated);padding:1px 5px;border-radius:3px;font-size:12px}
+#adr-view .adr-content pre{background:var(--bg-elevated);padding:var(--space-3);border-radius:var(--radius-sm);overflow-x:auto;font-size:12px}
+
+/* ═══ Search ═══ */
+#search-view{padding:var(--space-4);width:100%;max-width:860px}
+#search-view .search-bar{width:100%;padding:var(--space-3) var(--space-4);background:var(--bg-surface);border:1px solid var(--border-default);color:var(--text-primary);border-radius:var(--radius-md);font-size:15px;margin-bottom:var(--space-4);outline:none}
+#search-view .search-bar:focus{border-color:var(--accent-blue)}
+#search-view .result-item{padding:var(--space-4);margin-bottom:var(--space-2);background:var(--bg-surface);border:1px solid var(--border-muted);border-radius:var(--radius-md);cursor:pointer;transition:all .15s}
+#search-view .result-item:hover{border-color:var(--border-default)}
+#search-view .result-type{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:var(--space-1)}
+#search-view .result-title{font-size:14px;font-weight:600}
+#search-view .result-detail{font-size:12px;color:var(--text-secondary);margin-top:var(--space-1)}
+
+/* ═══ Empty states ═══ */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:220px;color:var(--text-muted);text-align:center;padding:var(--space-8)}
+.empty-state .empty-icon{font-size:32px;margin-bottom:var(--space-3);opacity:0.3}
+.empty-state .empty-title{font-size:14px;color:var(--text-secondary);margin-bottom:var(--space-1)}
+.empty-state .empty-hint{font-size:12px}
+
+/* ═══ Layer colors ═══ */
 .layer-基础设施{fill:#6b7280}
-.layer-数据获取{fill:#3b82f6}
-.layer-分析引擎{fill:#f59e0b}
-.layer-业务逻辑{fill:#10b981}
-.layer-服务层{fill:#8b5cf6}
-.layer-未分层{fill:#4b5563}
+.layer-数据获取{fill:#58a6ff}
+.layer-分析引擎{fill:#d29922}
+.layer-业务逻辑{fill:#3fb950}
+.layer-服务层{fill:#a371f7}
+.layer-未分层{fill:#484f58}
 </style>
 </head>
 <body>
-<header>
-  <button class="active" data-tab="graph">依赖图</button>
-  <button data-tab="table">模块清单</button>
-  <button data-tab="adr">决策日志</button>
-  <button data-tab="search">检索</button>
+<header role="tablist">
+  <button role="tab" aria-selected="true" class="active" data-tab="graph">依赖图</button>
+  <button role="tab" aria-selected="false" data-tab="table">模块清单</button>
+  <button role="tab" aria-selected="false" data-tab="adr">决策日志</button>
+  <button role="tab" aria-selected="false" data-tab="search">检索</button>
   <span class="spacer"></span>
   <span class="info" id="graph-info"></span>
 </header>
 <main>
-  <div id="tab-graph" class="tab active">
+  <div id="tab-graph" class="tab active" role="tabpanel">
     <svg id="graph-svg"></svg>
   </div>
-  <div id="tab-table" class="tab"><div id="table-view"></div></div>
-  <div id="tab-adr" class="tab"><div id="adr-view"></div></div>
-  <div id="tab-search" class="tab"><div id="search-view"></div></div>
-  <div class="side-panel" id="side-panel"></div>
+  <div id="tab-table" class="tab" role="tabpanel"><div id="table-view"></div></div>
+  <div id="tab-adr" class="tab" role="tabpanel"><div id="adr-view"></div></div>
+  <div id="tab-search" class="tab" role="tabpanel"><div id="search-view"></div></div>
+  <aside class="side-panel" id="side-panel" aria-label="模块详情">
+    <div class="side-panel-header">
+      <div><h3 id="sp-title"></h3><div class="path" id="sp-path"></div></div>
+      <button class="side-panel-close" onclick="document.getElementById('side-panel').classList.remove('open')" aria-label="关闭面板">&times;</button>
+    </div>
+    <div class="side-panel-body">
+      <div class="card"><label class="card-label">标注名称</label><input id="edit-label"></div>
+      <div class="card"><label class="card-label">备注</label><textarea id="edit-notes" rows="3"></textarea></div>
+      <div class="card"><label class="card-label">标签（逗号分隔）</label><input id="edit-tags"></div>
+      <div class="card"><label class="card-label">统计</label><div class="meta-row" id="sp-meta"></div></div>
+      <div class="card"><label class="card-label">被依赖</label><div id="sp-deps"></div></div>
+    </div>
+    <div class="side-panel-footer"><button onclick="saveCurate()">保存标注</button></div>
+  </aside>
 </main>
 <script>
-// ─── State ───
 let data = { nodes: [], edges: [] };
 let selectedNode = null;
 const LAYER_CLASSES = {
@@ -492,7 +554,6 @@ const LAYER_CLASSES = {
   '业务逻辑':'layer-业务逻辑','服务层':'layer-服务层','未分层':'layer-未分层'
 };
 
-// ─── Init ───
 (async function(){
   const gres = await fetch('api/graph');
   data = await gres.json();
@@ -504,36 +565,34 @@ const LAYER_CLASSES = {
   bindSearch();
 })();
 
-// ─── Tabs ───
 function bindTabs(){
   document.querySelectorAll('header button[data-tab]').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('header button[data-tab]').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('header button[data-tab]').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      btn.classList.add('active');
+      btn.classList.add('active'); btn.setAttribute('aria-selected','true');
       document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
       if (btn.dataset.tab === 'graph') renderGraph();
     });
   });
 }
 
-// ─── Graph (Tab 1) ───
+// ═══ Graph ═══
 function renderGraph(){
   const svg = document.getElementById('graph-svg');
   const W = svg.clientWidth || 1200, H = svg.clientHeight || 800;
   svg.innerHTML = '';
   svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+  svg.setAttribute('role','img');
+  svg.setAttribute('aria-label','模块依赖关系图');
 
   const nodes = data.nodes, edges = data.edges;
   if (!nodes.length) {
-    const t = document.createElementNS('http://www.w3.org/2000/svg','text');
-    t.setAttribute('x', W/2); t.setAttribute('y', H/2); t.setAttribute('text-anchor','middle');
-    t.setAttribute('fill','#555'); t.textContent = '未找到模块（运行 npm install -D dependency-cruiser 后重新扫描）';
-    svg.appendChild(t);
-    return;
+    const t = mkSvg('text',{x:W/2,y:H/2,'text-anchor':'middle','class':'empty-text'});
+    t.textContent = '未找到模块 — 运行 npm install -D dependency-cruiser 后重新扫描';
+    svg.appendChild(t); return;
   }
 
-  // Simple force layout
   const pos = {};
   const cx = W/2, cy = H/2;
   const nodeCount = nodes.length;
@@ -543,96 +602,87 @@ function renderGraph(){
     pos[n.id] = { x: cx + spread * Math.cos(angle), y: cy + spread * Math.sin(angle) };
   });
 
-  // Relax — scale iterations and forces by node count
   const iterations = Math.max(100, nodeCount * 2);
   const repulsionBase = 800;
   for (let iter = 0; iter < iterations; iter++) {
     const damp = 1 - (iter / iterations) * 0.8;
     for (const n of nodes) {
-      let fx = 0, fy = 0;
-      const pn = pos[n.id];
-      // Repulsion between all pairs
+      let fx = 0, fy = 0; const pn = pos[n.id];
       for (const m of nodes) {
-        if (n.id === m.id) continue;
-        const pm = pos[m.id];
+        if (n.id === m.id) continue; const pm = pos[m.id];
         let dx = pn.x - pm.x, dy = pn.y - pm.y;
         const dist = Math.max(5, Math.sqrt(dx*dx + dy*dy));
         const force = repulsionBase / (dist * dist);
         fx += (dx / dist) * force; fy += (dy / dist) * force;
       }
-      // Attraction along edges
       for (const e of edges) {
-        if (e.source === n.id && pos[e.target]) {
-          let dx = pos[e.target].x - pn.x, dy = pos[e.target].y - pn.y;
-          const dist = Math.max(5, Math.sqrt(dx*dx + dy*dy));
-          fx += dx * 0.005; fy += dy * 0.005;
-        }
-        if (e.target === n.id && pos[e.source]) {
-          let dx = pos[e.source].x - pn.x, dy = pos[e.source].y - pn.y;
-          const dist = Math.max(5, Math.sqrt(dx*dx + dy*dy));
-          fx += dx * 0.005; fy += dy * 0.005;
-        }
+        if (e.source === n.id && pos[e.target]) { let dx = pos[e.target].x - pn.x, dy = pos[e.target].y - pn.y; fx += dx * 0.005; fy += dy * 0.005; }
+        if (e.target === n.id && pos[e.source]) { let dx = pos[e.source].x - pn.x, dy = pos[e.source].y - pn.y; fx += dx * 0.005; fy += dy * 0.005; }
       }
-      // Center gravity
-      fx += (cx - pn.x) * 0.0005;
-      fy += (cy - pn.y) * 0.0005;
+      fx += (cx - pn.x) * 0.0005; fy += (cy - pn.y) * 0.0005;
       pn.x += fx * damp; pn.y += fy * damp;
     }
   }
 
-  // Draw edges
   const edgeSet = new Set();
   for (const e of edges) {
     const key = [e.source, e.target].sort().join('::');
-    if (edgeSet.has(key)) continue;
-    edgeSet.add(key);
+    if (edgeSet.has(key)) continue; edgeSet.add(key);
     if (!pos[e.source] || !pos[e.target]) continue;
-    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
-    line.setAttribute('x1', pos[e.source].x); line.setAttribute('y1', pos[e.source].y);
-    line.setAttribute('x2', pos[e.target].x); line.setAttribute('y2', pos[e.target].y);
-    line.setAttribute('opacity', '0.3');
-    svg.appendChild(line);
+    svg.appendChild(mkSvg('line',{x1:pos[e.source].x,y1:pos[e.source].y,x2:pos[e.target].x,y2:pos[e.target].y}));
   }
 
-  // Draw nodes
   for (const n of nodes) {
-    const p = pos[n.id];
-    if (!p) continue;
-    const depCount = n.dependents ? n.dependents.length : 0;
-    const radius = Math.max(6, Math.min(30, 8 + depCount * 2));
+    const p = pos[n.id]; if (!p) continue;
+    const depCount = (n.dependents||[]).length;
+    const radius = Math.max(7, Math.min(28, 8 + depCount * 2));
 
-    const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
-    circle.setAttribute('cx', p.x); circle.setAttribute('cy', p.y); circle.setAttribute('r', radius);
-    circle.setAttribute('data-id', n.id);
-    const layerClass = LAYER_CLASSES[n.layer] || 'layer-未分层';
-    circle.classList.add(layerClass);
+    const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.setAttribute('role','button'); g.setAttribute('tabindex','0');
+    g.setAttribute('aria-label', n.label + ' — ' + n.layer + ', ' + depCount + ' 个依赖');
+
+    const circle = mkSvg('circle',{cx:p.x,cy:p.y,r:radius,'data-id':n.id});
+    const lc = LAYER_CLASSES[n.layer] || 'layer-未分层';
+    circle.classList.add(lc);
     if (!n.hasJSDoc && !n.hasCuration) circle.classList.add('unlabeled');
-    if ((n.dependents||[]).length >= 5) circle.classList.add('core');
+    if (depCount >= 5) circle.classList.add('core');
+    circle.addEventListener('click', () => selectNode(n));
 
-    circle.addEventListener('click', () => selectNode(n, circle));
-    svg.appendChild(circle);
+    // background rectangle behind label for readability
+    const labelW = n.label.length * 7 + 8;
+    const lbg = mkSvg('rect',{x:p.x+radius+2,y:p.y-7,width:labelW,height:14,rx:3,'class':'node-label-bg'});
 
-    // Label
-    const text = document.createElementNS('http://www.w3.org/2000/svg','text');
-    text.setAttribute('x', p.x + radius + 4); text.setAttribute('y', p.y + 4);
+    const text = mkSvg('text',{x:p.x+radius+6,y:p.y+4,'class':'node-label'});
     text.textContent = n.label;
-    svg.appendChild(text);
+
+    g.appendChild(circle); g.appendChild(lbg); g.appendChild(text);
+    g.addEventListener('keydown', e => { if (e.key === 'Enter') selectNode(n); });
+    g.addEventListener('click', () => selectNode(n));
+    svg.appendChild(g);
   }
 }
 
-function selectNode(n, circle){
+function mkSvg(tag, attrs){
+  const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  for (const [k,v] of Object.entries(attrs)) el.setAttribute(k, v);
+  return el;
+}
+
+function selectNode(n){
   selectedNode = n;
-  const panel = document.getElementById('side-panel');
-  panel.classList.add('open');
-  panel.innerHTML =
-    '<h3>' + esc(n.label) + '</h3>' +
-    '<div class="path">' + esc(n.path) + '</div>' +
-    '<div class="field"><label>标注名称</label><input id="edit-label" value="' + escAttr(n.label) + '"></div>' +
-    '<div class="field"><label>备注</label><textarea id="edit-notes">' + esc(n.brief) + '</textarea></div>' +
-    '<div class="field"><label>标签（逗号分隔）</label><input id="edit-tags" value="' + escAttr((n.tags||[]).join(', ')) + '"></div>' +
-    '<div class="field"><label>层</label><span style="font-size:13px">' + esc(n.layer) + '</span></div>' +
-    '<div class="field"><label>被依赖 (' + (n.dependents||[]).length + ')</label><div class="dep-list">' + (n.dependents||[]).map(d => '<span onclick="selectByPath(\\'' + escAttr(d) + '\\')">' + esc(d.split('/').pop()) + '</span>').join('') + '</div>' +
-    '<button onclick="saveCurate()">💾 保存标注</button>';
+  document.getElementById('sp-title').textContent = n.label;
+  document.getElementById('sp-path').textContent = n.path;
+  document.getElementById('edit-label').value = n.label;
+  document.getElementById('edit-notes').value = n.brief || '';
+  document.getElementById('edit-tags').value = (n.tags||[]).join(', ');
+  document.getElementById('sp-meta').innerHTML =
+    '<span>层</span><span>' + esc(n.layer) + '</span>' +
+    '<span>被依赖</span><span>' + (n.dependents||[]).length + ' 个模块</span>' +
+    '<span>依赖数</span><span>' + n.depCount + ' 个模块</span>';
+  document.getElementById('sp-deps').innerHTML = (n.dependents||[]).length
+    ? (n.dependents||[]).map(d => '<span class="dep-chip" onclick="selectByPath(\\'' + escAttr(d) + '\\')" tabindex="0" role="button">' + esc(d.split('/').pop()) + '</span>').join('')
+    : '<span style="font-size:12px;color:var(--text-muted)">未被任何模块依赖</span>';
+  document.getElementById('side-panel').classList.add('open');
 }
 
 async function saveCurate(){
@@ -640,115 +690,79 @@ async function saveCurate(){
   const label = document.getElementById('edit-label').value;
   const notes = document.getElementById('edit-notes').value;
   const tags = document.getElementById('edit-tags').value.split(',').map(s=>s.trim()).filter(Boolean);
-  await fetch('api/curate', {
-    method: 'PUT',
-    headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({path: selectedNode.path, label, notes, tags})
-  });
-  // Update local data
+  await fetch('api/curate',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:selectedNode.path,label,notes,tags})});
   const n = data.nodes.find(x => x.id === selectedNode.path);
   if (n) { n.label = label; n.brief = notes; n.tags = tags; n.hasCuration = true; }
-  document.getElementById('side-panel').classList.remove('open');
-  renderGraph();
-  renderTable();
+  document.getElementById('side-panel').classList.remove('open'); selectedNode = null;
+  renderGraph(); renderTable();
 }
 
 function selectByPath(p){
-  document.querySelectorAll('header button[data-tab]').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('header button[data-tab]').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.querySelector('[data-tab=graph]').classList.add('active');
+  document.querySelector('[data-tab=graph]').classList.add('active'); document.querySelector('[data-tab=graph]').setAttribute('aria-selected','true');
   document.getElementById('tab-graph').classList.add('active');
   const n = data.nodes.find(x => x.id === p);
-  if (n) selectNode(n, null);
+  if (n) selectNode(n);
 }
 
-// ─── Table (Tab 2) ───
+// ═══ Table ═══
 function renderTable(filter){
   let rows = data.nodes;
-  if (filter) {
-    const q = filter.toLowerCase();
-    rows = rows.filter(n => n.label.toLowerCase().includes(q) || n.path.toLowerCase().includes(q) || n.layer.includes(q));
-  }
+  if (filter) { const q = filter.toLowerCase(); rows = rows.filter(n => n.label.toLowerCase().includes(q) || n.path.toLowerCase().includes(q) || n.layer.includes(q)); }
   const container = document.getElementById('table-view');
-  container.innerHTML =
-    '<input type="text" placeholder="筛选模块..." oninput="renderTable(this.value)" value="' + escAttr(filter||'') + '">' +
+  container.innerHTML = '<input type="text" class="filter-bar" placeholder="筛选模块..." oninput="renderTable(this.value)" value="' + escAttr(filter||'') + '" aria-label="筛选模块">' +
     '<table><thead><tr><th>模块</th><th>职责</th><th>层</th><th>被依赖</th><th>状态</th></tr></thead><tbody>' +
     rows.map(n =>
-      '<tr class="' + (!n.hasJSDoc && !n.hasCuration ? 'unlabeled' : '') + '" onclick="selectByPath(\\'' + escAttr(n.path) + '\\')" style="cursor:pointer">' +
-      '<td><b>' + esc(n.label) + '</b><br><span style="font-size:10px;color:#666">' + esc(n.path) + '</span></td>' +
+      '<tr class="' + (!n.hasJSDoc && !n.hasCuration ? 'unlabeled' : '') + '" onclick="selectByPath(\\'' + escAttr(n.path) + '\\')" tabindex="0" role="button" style="cursor:pointer">' +
+      '<td><b>' + esc(n.label) + '</b><br><span style="font-size:10px;color:var(--text-muted)">' + esc(n.path) + '</span></td>' +
       '<td style="max-width:240px">' + esc(n.brief || '—') + '</td>' +
       '<td>' + esc(n.layer) + '</td>' +
       '<td>' + (n.dependents||[]).length + '</td>' +
-      '<td>' + (!n.hasJSDoc && !n.hasCuration ? '<span class="badge warn">待标注</span>' : (n.tags||[]).map(t => '<span class="tag tag-' + escAttr(t.replace(/[^a-zA-Z0-9_-]/g,'')) + '">' + esc(t) + '</span>').join('')) + '</td>' +
-      '</tr>'
-    ).join('') +
-    '</tbody></table>';
+      '<td>' + (!n.hasJSDoc && !n.hasCuration ? '<span class="badge badge-warn">待标注</span>' : (n.tags||[]).map(t => '<span class="tag tag-' + escAttr(t.replace(/[^a-zA-Z0-9_-]/g,'')) + '">' + esc(t) + '</span>').join('')) + '</td></tr>'
+    ).join('') + '</tbody></table>';
 }
 
-// ─── ADR (Tab 3) ───
+// ═══ ADR ═══
 async function loadADRs(){
-  const res = await fetch('api/adrs');
-  const adrs = await res.json();
-  const container = document.getElementById('adr-view');
-  if (!adrs.length) {
-    container.innerHTML = '<div class="empty-state">暂无决策记录（在 docs/adr/ 下添加 ADR 文件）</div>';
-    return;
-  }
+  const res = await fetch('api/adrs'); const adrs = await res.json(); const container = document.getElementById('adr-view');
+  if (!adrs.length) { container.innerHTML = '<div class="empty-state"><span class="empty-icon">📋</span><span class="empty-title">暂无决策记录</span><span class="empty-hint">在 docs/adr/ 下添加 ADR 文件</span></div>'; return; }
   container.innerHTML = adrs.map(a =>
-    '<div class="adr-item" onclick="toggleADR(this)">' +
-    '<div class="adr-title">' + esc(a.title) + '</div>' +
-    '<div class="adr-meta">' + esc(a.date) + ' · ' + esc(a.status) + ' · ' + esc(a.file) + '</div>' +
-    '<div class="adr-content">' + simpleMD(a.content) + '</div>' +
-    '</div>'
+    '<div class="adr-item" onclick="toggleADR(this)" tabindex="0" role="button">' +
+    '<div class="adr-title">' + esc(a.title) + '</div><div class="adr-meta">' + esc(a.date) + ' · ' + esc(a.status) + ' · ' + esc(a.file) + '</div>' +
+    '<div class="adr-content">' + simpleMD(a.content) + '</div></div>'
   ).join('');
 }
-function toggleADR(el){
-  const content = el.querySelector('.adr-content');
-  content.classList.toggle('open');
-}
+function toggleADR(el){ el.querySelector('.adr-content').classList.toggle('open'); }
 
-// ─── Search (Tab 4) ───
+// ═══ Search ═══
 function bindSearch(){
-  const input = document.querySelector('#search-view');
-  input.innerHTML = '<input type="text" placeholder="搜索模块、标注、决策..." onkeyup="doSearch(this.value)"><div id="search-results"><div class="empty-state">输入关键词开始搜索</div></div>';
+  document.getElementById('search-view').innerHTML = '<input type="text" class="search-bar" placeholder="搜索模块、标注、决策..." onkeyup="doSearch(this.value)" aria-label="全局搜索"><div id="search-results"><div class="empty-state"><span class="empty-icon">🔍</span><span class="empty-title">输入关键词开始搜索</span><span class="empty-hint">支持模块名、JSDoc、标注、决策内容</span></div></div>';
 }
 async function doSearch(q){
   const container = document.getElementById('search-results');
-  if (!q) { container.innerHTML = '<div class="empty-state">输入关键词开始搜索</div>'; return; }
-  const res = await fetch('api/search?q=' + encodeURIComponent(q));
-  const results = await res.json();
-  if (!results.length) { container.innerHTML = '<div class="empty-state">未找到匹配结果</div>'; return; }
+  if (!q) { container.innerHTML = '<div class="empty-state"><span class="empty-icon">🔍</span><span class="empty-title">输入关键词开始搜索</span></div>'; return; }
+  const res = await fetch('api/search?q=' + encodeURIComponent(q)); const results = await res.json();
+  if (!results.length) { container.innerHTML = '<div class="empty-state"><span class="empty-icon">🔍</span><span class="empty-title">未找到匹配结果</span></div>'; return; }
   container.innerHTML = results.map(r =>
-    '<div class="result-item" onclick="navigateResult(\\'' + r.type + '\\', \\'' + escAttr(r.path||r.file||'') + '\\')">' +
+    '<div class="result-item" onclick="navigateResult(\\'' + r.type + '\\', \\'' + escAttr(r.path||r.file||'') + '\\')" tabindex="0" role="button">' +
     '<div class="result-type">' + esc(r.type === 'module' ? '模块' : '决策') + '</div>' +
     '<div class="result-title">' + esc(r.label || r.title) + '</div>' +
-    '<div class="result-detail">' + esc(r.brief || r.layer || '') + '</div>' +
-    '</div>'
+    '<div class="result-detail">' + esc(r.brief || r.layer || '') + '</div></div>'
   ).join('');
 }
 function navigateResult(type, id){
-  if (type === 'module') {
-    selectByPath(id);
-  } else {
-    document.querySelectorAll('header button[data-tab]').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.querySelector('[data-tab=adr]').classList.add('active');
-    document.getElementById('tab-adr').classList.add('active');
-  }
+  if (type === 'module') { selectByPath(id); return; }
+  document.querySelectorAll('header button[data-tab]').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelector('[data-tab=adr]').classList.add('active'); document.querySelector('[data-tab=adr]').setAttribute('aria-selected','true');
+  document.getElementById('tab-adr').classList.add('active');
 }
 
-// ─── Helpers ───
+// ═══ Helpers ═══
 function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function escAttr(s){ return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/'/g,'&#39;').replace(/\\\\/g,'\\\\\\\\'); }
-function simpleMD(md){
-  return esc(md)
-    .replace(/^### (.+)/gm,'<h3>$1</h3>')
-    .replace(/^## (.+)/gm,'<h2>$1</h2>')
-    .replace(/^# (.+)/gm,'<h1>$1</h1>')
-    .replace(/^- (.+)/gm,'<li>$1</li>')
-    .replace(/\\*\\*(.+?)\\*\\*/g,'<b>$1</b>')
-    .replace(/\\n/g,'<br>');
-}
+function simpleMD(md){ return esc(md).replace(/^### (.+)/gm,'<h3>$1</h3>').replace(/^## (.+)/gm,'<h2>$1</h2>').replace(/^# (.+)/gm,'<h1>$1</h1>').replace(/^- (.+)/gm,'<li>$1</li>').replace(/\\*\\*(.+?)\\*\\*/g,'<b>$1</b>').replace(/\\n/g,'<br>'); }
 </script>
 </body>
 </html>`);

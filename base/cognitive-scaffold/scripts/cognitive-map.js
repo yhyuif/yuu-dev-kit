@@ -535,14 +535,19 @@ function renderGraph(){
 
   // Simple force layout
   const pos = {};
-  const cx = W/2, cy = H/2, r = Math.min(W, H) * 0.35;
+  const cx = W/2, cy = H/2;
+  const nodeCount = nodes.length;
+  const spread = Math.min(W, H) * 0.42;
   nodes.forEach((n, i) => {
-    const angle = (2 * Math.PI * i) / nodes.length;
-    pos[n.id] = { x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) };
+    const angle = (2 * Math.PI * i) / nodeCount;
+    pos[n.id] = { x: cx + spread * Math.cos(angle), y: cy + spread * Math.sin(angle) };
   });
 
-  // Relax
-  for (let iter = 0; iter < 50; iter++) {
+  // Relax — scale iterations and forces by node count
+  const iterations = Math.max(100, nodeCount * 2);
+  const repulsionBase = 800;
+  for (let iter = 0; iter < iterations; iter++) {
+    const damp = 1 - (iter / iterations) * 0.8;
     for (const n of nodes) {
       let fx = 0, fy = 0;
       const pn = pos[n.id];
@@ -551,27 +556,27 @@ function renderGraph(){
         if (n.id === m.id) continue;
         const pm = pos[m.id];
         let dx = pn.x - pm.x, dy = pn.y - pm.y;
-        const dist = Math.max(1, Math.sqrt(dx*dx + dy*dy));
-        const force = 500 / (dist * dist);
+        const dist = Math.max(5, Math.sqrt(dx*dx + dy*dy));
+        const force = repulsionBase / (dist * dist);
         fx += (dx / dist) * force; fy += (dy / dist) * force;
       }
       // Attraction along edges
       for (const e of edges) {
         if (e.source === n.id && pos[e.target]) {
           let dx = pos[e.target].x - pn.x, dy = pos[e.target].y - pn.y;
-          const dist = Math.max(1, Math.sqrt(dx*dx + dy*dy));
-          fx += dx * 0.01; fy += dy * 0.01;
+          const dist = Math.max(5, Math.sqrt(dx*dx + dy*dy));
+          fx += dx * 0.005; fy += dy * 0.005;
         }
         if (e.target === n.id && pos[e.source]) {
           let dx = pos[e.source].x - pn.x, dy = pos[e.source].y - pn.y;
-          const dist = Math.max(1, Math.sqrt(dx*dx + dy*dy));
-          fx += dx * 0.01; fy += dy * 0.01;
+          const dist = Math.max(5, Math.sqrt(dx*dx + dy*dy));
+          fx += dx * 0.005; fy += dy * 0.005;
         }
       }
       // Center gravity
-      fx += (cx - pn.x) * 0.001;
-      fy += (cy - pn.y) * 0.001;
-      pn.x += fx * 0.5; pn.y += fy * 0.5;
+      fx += (cx - pn.x) * 0.0005;
+      fy += (cy - pn.y) * 0.0005;
+      pn.x += fx * damp; pn.y += fy * damp;
     }
   }
 

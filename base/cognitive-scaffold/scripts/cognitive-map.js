@@ -631,6 +631,7 @@ function renderGraph(){
   for (const n of nodes) {
     const p = pos[n.id]; if (!p) continue;
     const radius = p.radius;
+    const depCount = (n.dependents||[]).length;
 
     const g = document.createElementNS('http://www.w3.org/2000/svg','g');
     g.setAttribute('role','button'); g.setAttribute('tabindex','0');

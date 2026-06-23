@@ -139,6 +139,7 @@ function inferLayer(filePath) {
   if (/scoring|rule|stop.?loss|countersig|market.?env|decision|feature/i.test(dir)) return '分析引擎';
   if (/pipeline|ai.?review|analy[sz]e|discover|rating|flow|track|train|notif/i.test(dir)) return '业务逻辑';
   if (/server|route|middleware|api/i.test(dir)) return '服务层';
+  if (/scripts?/i.test(dir)) return '脚本层';
   return '';
 }
 
@@ -512,6 +513,7 @@ main{flex:1;display:flex;overflow:hidden}
 .layer-数据获取{fill:#58a6ff}
 .layer-分析引擎{fill:#d29922}
 .layer-业务逻辑{fill:#3fb950}
+.layer-脚本层{fill:#e879f9}
 .layer-服务层{fill:#a371f7}
 .layer-未分层{fill:#484f58}
 </style>
@@ -552,7 +554,7 @@ let data = { nodes: [], edges: [] };
 let selectedNode = null;
 const LAYER_CLASSES = {
   '基础设施':'layer-基础设施','数据获取':'layer-数据获取','分析引擎':'layer-分析引擎',
-  '业务逻辑':'layer-业务逻辑','服务层':'layer-服务层','未分层':'layer-未分层'
+  '业务逻辑':'layer-业务逻辑','服务层':'layer-服务层','脚本层':'layer-脚本层','未分层':'layer-未分层'
 };
 
 (async function(){

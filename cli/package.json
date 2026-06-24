@@ -1,0 +1,14 @@
+{
+  "name": "yuu-dev-kit",
+  "version": "2.0.0",
+  "description": "个人开发者 AI 辅助项目脚手架",
+  "type": "module",
+  "bin": {
+    "yyu": "./bin/yyu.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yhyuif/yuu-dev-kit"
+  },
+  "license": "MIT"
+}

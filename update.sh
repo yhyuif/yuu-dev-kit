@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-PROJECT_INIT_DIR="${PROJECT_INIT_DIR:-$HOME/project-init}"
+PROJECT_INIT_DIR="${PROJECT_INIT_DIR:-$HOME/yuu-dev-kit}"
 BASE_DIR="$PROJECT_INIT_DIR/base"
 
 echo "============================================"

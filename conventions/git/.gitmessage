@@ -1,0 +1,12 @@
+# Commit 消息格式
+
+feat: 描述
+fix: 描述
+chore: 描述
+docs: 描述
+refactor: 描述
+test: 描述
+
+# 规则
+# - feat/fix: 一行，50 字符以内
+# - 需要说明时换行留空后写详细描述
